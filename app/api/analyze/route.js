@@ -137,23 +137,7 @@ export async function POST(request) {
       }
     }
 
-    if (openRouterKey) {
-      for (const model of OPENROUTER_MODELS) {
-        try {
-          const result = await callOpenRouter(model, openRouterKey, frames, flow);
-          return NextResponse.json({
-            ok: true,
-            ...result,
-            evidenceFrames: frames.length,
-            warning: "Visual model fallback was unavailable, so this result contains no inferred visual findings."
-          });
-        } catch (error) {
-          errors.push("OpenRouter " + model + ": " + (error instanceof Error ? error.message : "request failed"));
-        }
-      }
-    }
-
-    return NextResponse.json({ ok: false, error: "Visual analysis could not be completed.", details: errors }, { status: 502 });
+    // OpenRouter text models are intentionally not used as a visual fallback.\n    // A result must be grounded in the supplied video pixels.\n\n    return NextResponse.json({ ok: false, error: "Visual analysis could not be completed.", details: errors }, { status: 502 });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Analysis failed." }, { status: 500 });
   }
