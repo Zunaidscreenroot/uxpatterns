@@ -1,5 +1,123 @@
-const patterns=[["Drip pricing","Charges appear late in the journey."],["Consent manipulation","Optional consent looks mandatory or unclear."],["Basket sneaking","Paid add-ons enter a decision without clear opt-in."],["Forced action","An unrelated action blocks progress."],["False urgency","Time pressure is used around a financial decision."],["Interface interference","Visual hierarchy steers users toward one choice."],["Cancellation friction","Exit or cancellation takes materially more effort."],["Trick wording","Financial or consent copy creates avoidable ambiguity."]];
-const flows=["Personal Loan","Credit Card","Account Opening / KYC","UPI Payment","Fixed Deposit","Investment / Mutual Fund","Insurance / Add-on","Other Banking Flow"];
-export default function Home(){return (<main><header className="container topbar"><div className="brand">Banking UX Auditor</div><nav className="nav"><a href="#audit">Audit</a><a href="#framework">Framework</a><a href="#method">Method</a></nav></header><div className="container"><section className="hero"><div><div className="kicker">India · Banking · UX risk</div><h1>Understand what a banking flow is really asking the customer to do.</h1><p className="lead">Upload a screen-recorded journey and turn it into an evidence-led audit of deceptive UX, transparency, consent and customer-control risks across Indian financial products.</p><div className="actions"><a className="btn primary" href="#audit">Start a flow audit ↗</a><a className="btn" href="#framework">Explore framework</a></div></div><div className="panel preview"><div className="muted">AUDIT PREVIEW</div><div className="row" style={{marginTop:16}}><div><b>Personal loan audit</b><div className="muted">17 screens · 2m 14s</div></div><div className="score">82</div></div>{[["Fee disclosure","HIGH","Important cost information appears after the product decision."],["Consent clarity","HIGH","Optional consent is not clearly separated from the core journey."],["CTA hierarchy","MEDIUM","Primary and secondary choices have materially different visual weight."]].map(([a,b,c])=><div className="item" style={{marginTop:12}} key={a}><div className="row"><b>{a}</b><span className={b==="MEDIUM"?"tag tagm":"tag"}>{b}</span></div><div className="muted">{c}</div></div>)}</div></section><section className="section" id="audit"><h2>Start with the flow, not a screenshot.</h2><p className="copy">The MVP is built around temporal evidence: meaningful screen changes, extracted text, interaction sequences and findings attached to moments in the recording.</p><div className="two"><div className="panel"><div aria-hidden="true" style={{fontSize:24}}>▶</div><h3>Upload flow video</h3><p className="muted">MP4 or MOV screen recording. Use sanitized or synthetic data for early tests.</p><input type="file" accept="video/mp4,video/quicktime"/></div><div className="panel"><label className="muted">Journey type</label><select defaultValue="Personal Loan">{flows.map(x=><option key={x}>{x}</option>)}</select><button className="btn primary" style={{width:"100%",marginTop:12}}>Analyze flow</button><p className="muted">Analysis engine plugs into this interface next.</p></div></div></section><section className="section" id="framework"><h2>Banking-specific pattern library.</h2><p className="copy">The taxonomy adapts India&apos;s dark-pattern guidance to banking while keeping regulatory relevance separate from UX observations.</p><div className="tax">{patterns.map(([a,b],i)=><div className="item" key={a}><b>{String(i+1).padStart(2,"0")} · {a}</b><div className="muted">{b}</div></div>)}</div></section><section className="section" id="method"><h2>Three evidence layers.</h2><div className="grid"><div className="item"><div aria-hidden="true" style={{fontSize:22}}>✓</div><h3>Observed UX evidence</h3><div className="muted">What the video shows: state, text, sequence, interaction and timestamp.</div></div><div className="item"><div aria-hidden="true" style={{fontSize:22}}>⌕</div><h3>Pattern classification</h3><div className="muted">Potential deceptive-design or customer-control pattern with confidence and rationale.</div></div><div className="item"><div aria-hidden="true" style={{fontSize:22}}>⚖</div><h3>Regulatory relevance</h3><div className="muted">Potentially relevant Indian requirement, linked to a source and scoped to the journey.</div></div></div></section><footer className="section"><p className="muted">UX audit aid, not legal or regulatory certification. Human review remains required for formal compliance decisions.</p></footer></div></main>
+"use client";
+
+import { useMemo, useState } from "react";
+
+const flows = [
+  "Personal Loan", "Credit Card", "Account Opening / KYC", "UPI Payment",
+  "Fixed Deposit", "Investment / Mutual Fund", "Insurance / Add-on", "Other Banking Flow",
+];
+
+const patterns = [
+  ["Drip pricing", "Important charges or costs appear late in the journey."],
+  ["Consent manipulation", "Optional consent looks mandatory or is difficult to distinguish."],
+  ["Basket sneaking", "A paid add-on or optional product enters the decision without clear opt-in."],
+  ["Forced action", "An unrelated action blocks progress through the core banking journey."],
+  ["False urgency", "Time pressure is used around a financial decision without adequate context."],
+  ["Interface interference", "Visual hierarchy makes one choice materially easier to select."],
+  ["Cancellation friction", "Exit, decline or cancellation requires materially more effort."],
+  ["Trick wording", "Financial, consent or disclosure copy creates avoidable ambiguity."],
+];
+
+const sampleFindings = [
+  { time: "00:18", title: "Fee disclosure", type: "Drip pricing", level: "High", text: "A processing-fee detail becomes visible only after the user has progressed into the application." },
+  { time: "00:41", title: "Consent clarity", type: "Consent manipulation", level: "High", text: "Marketing or data-sharing consent should be visually and semantically separated from the core application action." },
+  { time: "01:07", title: "CTA hierarchy", type: "Interface interference", level: "Medium", text: "The primary action receives substantially stronger visual emphasis than the alternative path." },
+];
+
+export default function Home() {
+  const [file, setFile] = useState(null);
+  const [flow, setFlow] = useState("Personal Loan");
+  const [running, setRunning] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+
+  const duration = useMemo(() => {
+    if (!file) return "No video selected";
+    return file.size > 50 * 1024 * 1024 ? "Large file · keep early tests under 50 MB" : "Ready for local analysis";
+  }, [file]);
+
+  function analyze() {
+    if (!file) return;
+    setRunning(true);
+    setShowReport(false);
+    window.setTimeout(() => {
+      setRunning(false);
+      setShowReport(true);
+      document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 900);
+  }
+
+  return (
+    <main>
+      <header className="container topbar">
+        <a className="brand" href="#">Banking UX Auditor <span>India</span></a>
+        <nav className="nav"><a href="#audit">Audit</a><a href="#results">Findings</a><a href="#framework">Framework</a><a href="#method">Method</a></nav>
+      </header>
+
+      <div className="container">
+        <section className="hero">
+          <div>
+            <div className="kicker">India · Banking · UX risk</div>
+            <h1>See what a banking flow is really asking the customer to do.</h1>
+            <p className="lead">Upload a screen recording and turn a financial journey into timestamped UX evidence, potential dark-pattern classifications and regulatory-relevance checks.</p>
+            <div className="actions"><a className="btn primary" href="#audit">Start a flow audit <span>↗</span></a><a className="btn" href="#framework">Explore framework</a></div>
+            <div className="trustline"><span>●</span> Evidence-first · Human review · India-focused</div>
+          </div>
+
+          <div className="panel preview">
+            <div className="eyebrow">AUDIT PREVIEW</div>
+            <div className="preview-score"><div><b>Personal loan journey</b><div className="muted">17 screens · 2m 14s</div></div><div className="score">82</div></div>
+            {sampleFindings.map((item) => <div className="finding-mini" key={item.title}><div className="row"><b>{item.title}</b><span className={item.level === "Medium" ? "tag medium" : "tag"}>{item.level}</span></div><div className="muted">{item.text}</div></div>)}
+          </div>
+        </section>
+
+        <section className="section" id="audit">
+          <div className="section-head"><div><div className="kicker">01 · Upload</div><h2>Start with the flow, not a screenshot.</h2></div><p className="copy">The product is designed around temporal evidence: screen changes, text, interactions and the moment a decision or disclosure appears.</p></div>
+          <div className="audit-grid">
+            <label className={"upload panel " + (file ? "selected" : "")}>
+              <input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <div className="upload-icon">▶</div>
+              <h3>{file ? file.name : "Drop a banking flow video"}</h3>
+              <p className="muted">{file ? duration : "MP4, MOV or WebM · screen recording · sanitized data only"}</p>
+              <span className="upload-link">{file ? "Choose another video" : "Browse files"}</span>
+            </label>
+
+            <div className="panel setup">
+              <div className="eyebrow">AUDIT SETUP</div>
+              <label className="field-label" htmlFor="journey">Banking journey</label>
+              <select id="journey" value={flow} onChange={(e) => setFlow(e.target.value)}>{flows.map((item) => <option key={item}>{item}</option>)}</select>
+              <div className="setup-note"><span>✓</span><div><b>Current scope</b><div className="muted">UX evidence + pattern classification + regulatory relevance</div></div></div>
+              <button className="btn primary full" onClick={analyze} disabled={!file || running}>{running ? "Analyzing…" : "Analyze flow"}</button>
+              <div className="muted center">{file ? "Selected: " + flow : "Choose a video to enable analysis"}</div>
+            </div>
+          </div>
+        </section>
+
+        {showReport && (
+          <section className="section" id="results">
+            <div className="section-head"><div><div className="kicker">02 · Results</div><h2>Evidence timeline</h2></div><p className="copy">Prototype output for <b>{flow}</b>. Findings are hypotheses for review, not legal conclusions.</p></div>
+            <div className="results-grid">
+              <div className="panel risk-card"><div className="eyebrow">TRANSPARENCY SIGNAL</div><div className="big-number">3</div><p>potential issues detected</p><div className="bar"><span /></div><div className="muted">2 high · 1 medium</div></div>
+              <div className="timeline">{sampleFindings.map((item) => <div className="timeline-item" key={item.time}><div className="time">{item.time}</div><div className="timeline-dot" /><div className="panel"><div className="row"><div><b>{item.title}</b><div className="muted">{item.type}</div></div><span className={item.level === "Medium" ? "tag medium" : "tag"}>{item.level}</span></div><p className="muted">{item.text}</p><a className="evidence-link" href="#method">View evidence model →</a></div></div>)}</div>
+            </div>
+          </section>
+        )}
+
+        <section className="section" id="framework">
+          <div className="section-head"><div><div className="kicker">03 · Pattern library</div><h2>Banking-specific pattern library.</h2></div><p className="copy">Start with known deceptive-design patterns, then add banking-specific interpretations and source-backed regulatory relevance.</p></div>
+          <div className="tax">{patterns.map(([title, desc], i) => <div className="item" key={title}><div className="pattern-num">{String(i + 1).padStart(2, "0")}</div><div><b>{title}</b><div className="muted">{desc}</div></div></div>)}</div>
+        </section>
+
+        <section className="section" id="method">
+          <div className="section-head"><div><div className="kicker">04 · Evidence model</div><h2>Three layers keep the audit defensible.</h2></div></div>
+          <div className="grid">
+            <div className="item"><div className="step">01</div><h3>Observed UX evidence</h3><div className="muted">What the recording actually shows: screen state, copy, sequence, interaction and timestamp.</div></div>
+            <div className="item"><div className="step">02</div><h3>Pattern classification</h3><div className="muted">Potential deceptive-design or customer-control pattern with confidence and rationale.</div></div>
+            <div className="item"><div className="step">03</div><h3>Regulatory relevance</h3><div className="muted">Potentially relevant Indian requirement, linked to a source and scoped to the journey.</div></div>
+          </div>
+        </section>
+
+        <footer className="footer"><b>Banking UX Auditor</b><span>Prototype · UX audit aid, not legal or regulatory certification.</span></footer>
+      </div>
+    </main>
   );
 }
