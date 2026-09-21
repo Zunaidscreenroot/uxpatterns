@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Banking UX Auditor",
-  description: "India-focused UX and responsible-banking audit",
+  title: "Banking Experience Risk",
+  description: "Evidence-backed review of deceptive patterns, customer transparency and regulatory relevance across Indian banking journeys.",
 };
 
 export default function RootLayout({ children }) {
