@@ -35,15 +35,78 @@ export default function Home() {
     return file.size > 50 * 1024 * 1024 ? "Large file · keep early tests under 50 MB" : "Ready for local analysis";
   }, [file]);
 
-  function analyze() {
-    if (!file) return;
+  async function analyze() {
+    if (!file || running) return;
     setRunning(true);
     setShowReport(false);
-    window.setTimeout(() => {
-      setRunning(false);
+    setReport(null);
+    setError("");
+    try {
+      const frames = await extractFrames(file, 6);
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flow, frames }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Analysis failed.");
+      setReport(data.report);
       setShowReport(true);
-      document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 900);
+      requestAnimationFrame(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not analyze this video.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function extractFrames(videoFile, count = 6) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(videoFile);
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.onloadedmetadata = async () => {
+        const duration = video.duration;
+        if (!Number.isFinite(duration) || duration <= 0) {
+          URL.revokeObjectURL(url);
+          reject(new Error("Could not read video duration."));
+          return;
+        }
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(1, 1280 / Math.max(video.videoWidth || 1280, video.videoHeight || 720));
+        canvas.width = Math.max(1, Math.round((video.videoWidth || 1280) * scale));
+        canvas.height = Math.max(1, Math.round((video.videoHeight || 720) * scale));
+        const ctx = canvas.getContext("2d");
+        const times = Array.from({ length: count }, (_, i) =>
+          count === 1 ? 0 : Math.min(Math.max(0, duration - 0.05), (duration * i) / (count - 1))
+        );
+        const frames = [];
+        try {
+          for (const time of times) {
+            await new Promise((res, rej) => {
+              video.currentTime = time;
+              video.onseeked = res;
+              video.onerror = () => rej(new Error("Could not seek video."));
+            });
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const timestamp = new Date(time * 1000).toISOString().slice(14, 19);
+            frames.push({ timestamp, data: canvas.toDataURL("image/jpeg", 0.68).split(",")[1] });
+          }
+          URL.revokeObjectURL(url);
+          resolve(frames);
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          reject(err);
+        }
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Could not load this video."));
+      };
+      video.src = url;
+    });
   }
 
   return (
