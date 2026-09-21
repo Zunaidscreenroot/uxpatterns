@@ -44,14 +44,19 @@ export default function Home() {
     setReport(null);
     setError("");
     try {
-      const frames = await extractFrames(file, 6);
+      const frames = await extractFrames(file, 4);
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ flow, frames }),
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Analysis failed.");
+      const raw = await response.text();
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch {}
+      if (!response.ok || !data?.ok) {
+        const detail = Array.isArray(data?.details) ? data.details.join(" | ") : "";
+        throw new Error(data?.error || detail || `Analysis request failed (HTTP ${response.status}).`);
+      }
       setReport(data.report);
       setShowReport(true);
       requestAnimationFrame(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -62,7 +67,7 @@ export default function Home() {
     }
   }
 
-  function extractFrames(videoFile, count = 6) {
+  function extractFrames(videoFile, count = 4) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(videoFile);
       const video = document.createElement("video");
@@ -77,9 +82,9 @@ export default function Home() {
           return;
         }
         const canvas = document.createElement("canvas");
-        const scale = Math.min(1, 1280 / Math.max(video.videoWidth || 1280, video.videoHeight || 720));
-        canvas.width = Math.max(1, Math.round((video.videoWidth || 1280) * scale));
-        canvas.height = Math.max(1, Math.round((video.videoHeight || 720) * scale));
+        const scale = Math.min(1, 960 / Math.max(video.videoWidth || 960, video.videoHeight || 540));
+        canvas.width = Math.max(1, Math.round((video.videoWidth || 960) * scale));
+        canvas.height = Math.max(1, Math.round((video.videoHeight || 540) * scale));
         const ctx = canvas.getContext("2d");
         const times = Array.from({ length: count }, (_, i) =>
           count === 1 ? 0 : Math.min(Math.max(0, duration - 0.05), (duration * i) / (count - 1))
@@ -94,7 +99,7 @@ export default function Home() {
             });
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const timestamp = new Date(time * 1000).toISOString().slice(14, 19);
-            frames.push({ timestamp, data: canvas.toDataURL("image/jpeg", 0.68).split(",")[1] });
+            frames.push({ timestamp, data: canvas.toDataURL("image/jpeg", 0.5).split(",")[1] });
           }
           URL.revokeObjectURL(url);
           resolve(frames);
