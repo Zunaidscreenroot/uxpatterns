@@ -80,8 +80,13 @@ async function callGemini(model, apiKey, frames, flow) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data?.error?.message || "Gemini HTTP " + response.status);
   const text = data?.candidates?.[0]?.content?.parts?.map((p) => p?.text || "").join("").trim();
-  const report = normalizeReport(extractJson(text));
-  return { report, model, provider: "gemini", usage: data?.usageMetadata || null };
+  if (!text) {
+    const finish = data?.candidates?.[0]?.finishReason || "UNKNOWN";
+    throw new Error("Gemini returned no text (finishReason: " + finish + ").");
+  }
+  const parsed = extractJson(text);
+  if (!parsed) throw new Error("Gemini returned non-JSON analysis output.");
+  return { report: normalizeReport(parsed), model, provider: "gemini", usage: data?.usageMetadata || null };
 }
 
 async function callOpenRouter(model, apiKey, frames, flow) {
@@ -148,7 +153,7 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ ok: false, error: "No analysis model was available.", details: errors }, { status: 502 });
+    return NextResponse.json({ ok: false, error: "Visual analysis could not be completed.", details: errors }, { status: 502 });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Analysis failed." }, { status: 500 });
   }
