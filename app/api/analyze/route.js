@@ -137,7 +137,10 @@ export async function POST(request) {
       }
     }
 
-    // OpenRouter text models are intentionally not used as a visual fallback.\n    // A result must be grounded in the supplied video pixels.\n\n    return NextResponse.json({ ok: false, error: "Visual analysis could not be completed.", details: errors }, { status: 502 });
+    // OpenRouter text models are intentionally not used as a visual fallback.
+    // A result must be grounded in the supplied video pixels.
+
+    return NextResponse.json({ ok: false, error: "Visual analysis could not be completed.", details: errors }, { status: 502 });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Analysis failed." }, { status: 500 });
   }
