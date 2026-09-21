@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODELS = [
-  "google/gemma-4-26b-a4b-it:free",
-  "google/gemma-4-31b-it:free",
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "nex-agi/nex-n2.5-pro:free",
   "nex-agi/nex-n2.5-mini:free",
 ];
