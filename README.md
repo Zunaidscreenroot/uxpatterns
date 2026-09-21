@@ -8,25 +8,45 @@ India-focused MVP for auditing recorded banking journeys for UX transparency, de
 - Local prototype analysis state with evidence timeline
 - Banking-specific dark-pattern taxonomy
 - Three-layer evidence model: observed UX → pattern classification → regulatory relevance
-- Server-side OpenRouter model health-check endpoint
+- Server-side model health-check endpoint with separate Gemini and OpenRouter providers
 - Clear separation between UX hypotheses and formal legal/compliance conclusions
 
 ## Model health check
 
-The app keeps the OpenRouter API key server-side and exposes:
+The checker keeps both API keys server-side and never exposes them to the browser.
 
-`GET /api/models/check?scope=safe`
+### Gemini — direct Google API
 
-Safe mode tests a small set of free models without sending any user video or banking data.
+GET /api/models/check?provider=gemini
 
-Other useful checks:
+Uses GEMINI_API_KEY and calls the Google Gemini API directly.
 
-- `/api/models/check?scope=free&limit=20` — test up to 20 free text-capable models from the live OpenRouter catalog.
-- `/api/models/check?scope=google&limit=12` — test free Google models currently available.
-- `/api/models/check?scope=google&includePaid=true` — also test selected Gemini Flash models; paid inference may consume OpenRouter credits.
-- `/api/models/check?models=google/gemma-4-26b-a4b-it:free,google/gemini-3.8-flash` — test an explicit model list.
+Useful checks:
+- /api/models/check?provider=gemini — discover and test available Gemini models that support generateContent.
+- /api/models/check?provider=gemini&model=gemini-3.8-flash — test one specific Gemini model.
+- /api/models/check?provider=gemini&models=gemini-3.8-flash,gemini-3.7-flash — test an explicit list.
 
-The endpoint uses a tiny `MODEL_OK` prompt and reports status, latency, resolved model, response and token usage where available. It must never receive customer PII or real banking data.
+### OpenRouter
+
+GET /api/models/check?provider=openrouter
+
+Uses OPENROUTER_API_KEY and calls OpenRouter directly.
+
+Useful checks:
+- /api/models/check?provider=openrouter — test the fixed free-model safety set.
+- /api/models/check?provider=openrouter&scope=free&limit=20 — test free text-capable models from the live OpenRouter catalog.
+- /api/models/check?provider=openrouter&model=google/gemma-4-31b-it:free — test one specific OpenRouter model.
+- /api/models/check?provider=openrouter&models=google/gemma-4-26b-a4b-it:free,nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free — test an explicit list.
+
+The checker reports distinct states such as working, rate_limited, unsupported, blocked, empty_response and failed. A successful HTTP 200 response is not incorrectly marked as failed merely because a model returns reasoning instead of plain message.content.
+
+The fixed OpenRouter safety set intentionally excludes openrouter/free because that router can resolve to a different underlying model on different requests, which is undesirable for reproducible audit results.
+
+Both providers use a tiny non-sensitive MODEL_OK prompt. Never send customer PII, credentials, financial information or real banking data to this health-check endpoint.
+
+Required Vercel environment variables:
+- GEMINI_API_KEY
+- OPENROUTER_API_KEY
 
 ## Next engine
 1. Extract representative keyframes and timestamps from the uploaded video.
