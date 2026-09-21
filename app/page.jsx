@@ -28,7 +28,7 @@ export default function Home() {
   const [file, setFile] = useState(null);
   const [flow, setFlow] = useState("Personal Loan");
   const [running, setRunning] = useState(false);
-  const [showReport, setShowReport] = useState(false);
+  const [showReport, setShowReport] = useState(false);\n  const [report, setReport] = useState(null);\n  const [error, setError] = useState("");
 
   const duration = useMemo(() => {
     if (!file) return "No video selected";
@@ -87,7 +87,7 @@ export default function Home() {
               <select id="journey" value={flow} onChange={(e) => setFlow(e.target.value)}>{flows.map((item) => <option key={item}>{item}</option>)}</select>
               <div className="setup-note"><span>✓</span><div><b>Current scope</b><div className="muted">UX evidence + pattern classification + regulatory relevance</div></div></div>
               <button className="btn primary full" onClick={analyze} disabled={!file || running}>{running ? "Analyzing…" : "Analyze flow"}</button>
-              <div className="muted center">{file ? "Selected: " + flow : "Choose a video to enable analysis"}</div>
+              <div className="muted center">{file ? "Selected: " + flow : "Choose a video to enable analysis"}</div>{error && <div className="error-note">{error}</div>}
             </div>
           </div>
         </section>
@@ -96,8 +96,8 @@ export default function Home() {
           <section className="section" id="results">
             <div className="section-head"><div><div className="kicker">02 · Results</div><h2>Evidence timeline</h2></div><p className="copy">Prototype output for <b>{flow}</b>. Findings are hypotheses for review, not legal conclusions.</p></div>
             <div className="results-grid">
-              <div className="panel risk-card"><div className="eyebrow">TRANSPARENCY SIGNAL</div><div className="big-number">3</div><p>potential issues detected</p><div className="bar"><span /></div><div className="muted">2 high · 1 medium</div></div>
-              <div className="timeline">{sampleFindings.map((item) => <div className="timeline-item" key={item.time}><div className="time">{item.time}</div><div className="timeline-dot" /><div className="panel"><div className="row"><div><b>{item.title}</b><div className="muted">{item.type}</div></div><span className={item.level === "Medium" ? "tag medium" : "tag"}>{item.level}</span></div><p className="muted">{item.text}</p><a className="evidence-link" href="#method">View evidence model →</a></div></div>)}</div>
+              <div className="panel risk-card"><div className="eyebrow">TRANSPARENCY SIGNAL</div><div className="big-number">{report?.findings?.length ?? 0}</div><p>potential issues detected</p><div className="bar"><span style={{ width: `${Math.min(100, (report?.findings?.length ?? 0) * 20)}%` }} /></div><div className="muted">AI-generated hypotheses · human review required</div></div>
+              <div className="timeline">{report?.summary && <div className="panel report-summary"><b>AI summary</b><p className="muted">{report.summary}</p></div>}{(report?.findings || []).map((item, i) => <div className="timeline-item" key={`${item.timestamp}-${i}`}><div className="time">{item.timestamp}</div><div className="timeline-dot" /><div className="panel"><div className="row"><div><b>{item.title}</b><div className="muted">{item.pattern} · {Math.round(item.confidence * 100)}% confidence</div></div><span className={item.severity === "Medium" ? "tag medium" : item.severity === "Low" ? "tag low" : "tag"}>{item.severity}</span></div><p className="muted"><b>Evidence:</b> {item.evidence}</p><p className="muted"><b>Rationale:</b> {item.rationale}</p><p className="muted"><b>Regulatory relevance:</b> {item.regulatory_relevance}</p><a className="evidence-link" href="#method">View evidence model →</a></div></div>)}</div>
             </div>
           </section>
         )}
