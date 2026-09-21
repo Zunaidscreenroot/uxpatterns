@@ -8,7 +8,25 @@ India-focused MVP for auditing recorded banking journeys for UX transparency, de
 - Local prototype analysis state with evidence timeline
 - Banking-specific dark-pattern taxonomy
 - Three-layer evidence model: observed UX → pattern classification → regulatory relevance
+- Server-side OpenRouter model health-check endpoint
 - Clear separation between UX hypotheses and formal legal/compliance conclusions
+
+## Model health check
+
+The app keeps the OpenRouter API key server-side and exposes:
+
+`GET /api/models/check?scope=safe`
+
+Safe mode tests a small set of free models without sending any user video or banking data.
+
+Other useful checks:
+
+- `/api/models/check?scope=free&limit=20` — test up to 20 free text-capable models from the live OpenRouter catalog.
+- `/api/models/check?scope=google&limit=12` — test free Google models currently available.
+- `/api/models/check?scope=google&includePaid=true` — also test selected Gemini Flash models; paid inference may consume OpenRouter credits.
+- `/api/models/check?models=google/gemma-4-26b-a4b-it:free,google/gemini-3.8-flash` — test an explicit model list.
+
+The endpoint uses a tiny `MODEL_OK` prompt and reports status, latency, resolved model, response and token usage where available. It must never receive customer PII or real banking data.
 
 ## Next engine
 1. Extract representative keyframes and timestamps from the uploaded video.
