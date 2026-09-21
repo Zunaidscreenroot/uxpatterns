@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.7-flash"];
+const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.7-flash"];\nconst GEMINI_RETRIES = 2;
 const OPENROUTER_MODELS = ["nex-agi/nex-n2.5-pro:free", "nex-agi/nex-n2.5-mini:free"];
 
 const SYSTEM_PROMPT = `You are an evidence-first banking UX auditor for India. Analyze only what is visible in the supplied screen-recording frames and the provided journey name.
@@ -65,19 +65,29 @@ async function callGemini(model, apiKey, frames, flow) {
     parts.push({ inlineData: { mimeType: "image/jpeg", data: frame.data } });
   }
 
-  const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey),
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: { temperature: 0, maxOutputTokens: 2500, responseMimeType: "application/json" }
-      }),
-      cache: "no-store"
-    }
-  );
-  const data = await response.json().catch(() => ({}));
+  let response;
+  let data = {};
+
+  for (let attempt = 0; attempt <= GEMINI_RETRIES; attempt += 1) {
+    response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts }],
+          generationConfig: { temperature: 0, maxOutputTokens: 2500, responseMimeType: "application/json" }
+        }),
+        cache: "no-store"
+      }
+    );
+
+    data = await response.json().catch(() => ({}));
+    const retryable = [429, 500, 502, 503, 504].includes(response.status);
+    if (response.ok || !retryable || attempt === GEMINI_RETRIES) break;
+    await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
+  }
+
   if (!response.ok) throw new Error(data?.error?.message || "Gemini HTTP " + response.status);
   const text = data?.candidates?.[0]?.content?.parts?.map((p) => p?.text || "").join("").trim();
   if (!text) {
