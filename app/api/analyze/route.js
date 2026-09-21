@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.7-flash"];\nconst GEMINI_RETRIES = 2;
+const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.7-flash"];
+const GEMINI_RETRIES = 2;
 const OPENROUTER_MODELS = ["nex-agi/nex-n2.5-pro:free", "nex-agi/nex-n2.5-mini:free"];
 
 const SYSTEM_PROMPT = `You are an evidence-first banking UX auditor for India. Analyze only what is visible in the supplied screen-recording frames and the provided journey name.
