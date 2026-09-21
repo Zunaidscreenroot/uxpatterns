@@ -28,7 +28,9 @@ export default function Home() {
   const [file, setFile] = useState(null);
   const [flow, setFlow] = useState("Personal Loan");
   const [running, setRunning] = useState(false);
-  const [showReport, setShowReport] = useState(false);\n  const [report, setReport] = useState(null);\n  const [error, setError] = useState("");
+  const [showReport, setShowReport] = useState(false);
+  const [report, setReport] = useState(null);
+  const [error, setError] = useState("");
 
   const duration = useMemo(() => {
     if (!file) return "No video selected";
