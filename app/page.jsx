@@ -55,7 +55,7 @@ export default function Home() {
       try { data = raw ? JSON.parse(raw) : null; } catch {}
       if (!response.ok || !data?.ok) {
         const detail = Array.isArray(data?.details) ? data.details.join(" | ") : "";
-        throw new Error(data?.error || detail || `Analysis request failed (HTTP ${response.status}).`);
+        throw new Error([data?.error, detail].filter(Boolean).join(": ") || `Analysis request failed (HTTP ${response.status}).`);
       }
       setReport(data.report);
       setShowReport(true);
